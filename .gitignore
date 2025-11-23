@@ -9,6 +9,9 @@ __pycache__/
 *.sqlite3
 *.db
 
+
+.ipynb_checkpoints/
+pages/.ipynb_checkpoints/
 # -------------------------
 # Virtual environments
 # -------------------------
