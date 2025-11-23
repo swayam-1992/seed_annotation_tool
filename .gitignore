@@ -1,0 +1,82 @@
+# -------------------------
+# Python cache & metadata
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.sqlite3
+*.db
+
+# -------------------------
+# Virtual environments
+# -------------------------
+venv/
+env/
+.venv/
+ENV/
+
+# -------------------------
+# Streamlit & app artifacts
+# -------------------------
+.streamlit/secrets.toml
+.streamlit/config.toml
+
+# -------------------------
+# OS files
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# IDE/editor files
+# -------------------------
+.vscode/
+.idea/
+*.swp
+
+# -------------------------
+# Build artifacts
+# -------------------------
+build/
+dist/
+*.spec
+
+# -------------------------
+# Node modules (if any)
+# -------------------------
+node_modules/
+
+# -------------------------
+# Runtime-generated folders (custom)
+# -------------------------
+output/
+tmp/
+temp/
+temp_uploads/
+annotations/
+
+# -------------------------
+# macOS metadata
+# -------------------------
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# -------------------------
+# App packaging (PyInstaller/Electron)
+# -------------------------
+*.dmg
+*.app
+*.pkg
+*.icns
+
+# -------------------------
+# Ignore uploaded large images (optional)
+# -------------------------
+annotations/
+temp_uploads/
+images/
+
