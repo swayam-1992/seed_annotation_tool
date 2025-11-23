@@ -1,14 +1,15 @@
-# pages/4_Annotation_Grid.py   ← FINAL 100% WORKING VERSION
+# pages/4_Annotation_Grid.py   ← UPDATED: DOWNLOAD TO USER'S COMPUTER
 import streamlit as st
 import json
 import os
 import shutil
 from datetime import datetime
+import io
 
 st.set_page_config(layout="wide", page_title="Cell Annotation")
 
 # ------------------------------------------------------------------
-# Safety check – FIXED: now shows helpful buttons instead of dead end
+# Safety check
 # ------------------------------------------------------------------
 if "metadata" not in st.session_state or "rotated_image" not in st.session_state:
     st.error("No tray data found! You need to complete the previous steps first.")
@@ -127,31 +128,48 @@ with col_grid:
         st.session_state.grid = value["grid"]
 
 # ------------------------------------------------------------------
-# SAVE FINAL ANNOTATION
+# DOWNLOAD BUTTONS (NEW!)
 # ------------------------------------------------------------------
-if st.button("Save Final Annotation", type="primary", use_container_width=True):
-    os.makedirs("images", exist_ok=True)
-    os.makedirs("annotations", exist_ok=True)
+st.markdown("---")
+st.markdown("### Download Your Results")
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    base_name = f"{meta['crop']}_({meta['days_after_sowing']}d)_annotated_{timestamp}"
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+base_name = f"{meta['crop']}_({meta['days_after_sowing']}d)_annotated_{timestamp}"
 
-    # Save JSON
-    with open(f"annotations/{base_name}.json", "w") as f:
-        json.dump({
-            "saved_at": datetime.now().isoformat(),
-            "image_file": f"images/{base_name}.png",
-            "metadata": meta,
-            "annotation_grid": st.session_state.grid
-        }, f, indent=2)
+# Prepare JSON content
+json_data = {
+    "saved_at": datetime.now().isoformat(),
+    "metadata": meta,
+    "annotation_grid": st.session_state.grid
+}
+json_bytes = json.dumps(json_data, indent=2).encode('utf-8')
 
-    # Save clean rotated image only
-    rotated_img.save(f"images/{base_name}.png")
+# Prepare PNG image as bytes
+img_buffer = io.BytesIO()
+rotated_img.save(img_buffer, format="PNG")
+img_bytes = img_buffer.getvalue()
 
-    st.success("Annotation saved successfully!")
-    st.success(f"Image → `images/{base_name}.png`")
-    st.success(f"Annotation → `annotations/{base_name}.json`")
-    st.balloons()
+col_dl1, col_dl2 = st.columns(2)
+
+with col_dl1:
+    st.download_button(
+        label="📥 Download Image (.png)",
+        data=img_bytes,
+        file_name=f"{base_name}.png",
+        mime="image/png",
+        use_container_width=True
+    )
+
+with col_dl2:
+    st.download_button(
+        label="📥 Download Annotation (.json)",
+        data=json_bytes,
+        file_name=f"{base_name}.json",
+        mime="application/json",
+        use_container_width=True
+    )
+
+st.success("When you're happy with the annotation, click the buttons above to download both files to your computer!")
 
 # ------------------------------------------------------------------
 # Finish & Start New Tray
