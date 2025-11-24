@@ -5,7 +5,7 @@ from PIL import Image
 import PIL.ExifTags as ExifTags
 
 st.set_page_config(layout="wide", page_title="Seed Tray Annotator")
-st.markdown("<h3>STEP 4 – Photograph & Tray Details</h3>", unsafe_allow_html=True)
+st.markdown("<h3>STEP 3 – Photograph & Tray Details</h3>", unsafe_allow_html=True)
 
 # Safety check
 if "rotated_image" not in st.session_state:
@@ -15,9 +15,9 @@ if "rotated_image" not in st.session_state:
     st.stop()
 
 img_clean = st.session_state.rotated_image
-img_display = st.session_state.get("gridded_image", img_clean)  # Show gridded if available
+img_display = img_clean  # Always show clean image now
 
-# EXIF date extraction
+# EXIF date extraction (unchanged)
 def extract_exif_date(pil_image):
     try:
         exif = pil_image.getexif()
@@ -39,12 +39,9 @@ exif_date = extract_exif_date(img_clean)
 col_img, col_form = st.columns([1, 1.3])
 
 with col_img:
-    st.image(img_display, caption="Your Seed Tray (with Grid Overlay)", width=550)
-    st.caption("Final saved image will be **clean** (no grid lines)")
+    st.image(img_display, caption="Your Seed Tray", width=550)
 
 with col_form:
-    #st.header("Photograph & Tray Details")
-
     st.subheader("Date of photograph capture")
     if exif_date:
         st.success(f"Auto-detected: **{exif_date}**")
@@ -55,13 +52,13 @@ with col_form:
         capture_date = st.date_input("Date of Capture", datetime.now().date())
 
     st.subheader("Tray Layout")
-    t1, t2, t3 = st.columns(3)
+    t1, t2 = st.columns(2)
     with t1:
-        nrows = st.number_input("Rows", value=st.session_state.final_grid_rows, disabled=True)
+        nrows = st.number_input("Rows", min_value=1, value=14)
     with t2:
-        ncols = st.number_input("Columns", value=st.session_state.final_grid_cols, disabled=True)
-    with t3:
-        shape = st.selectbox("Cavity Shape", ["Circle", "Square", "Hexagon", "Rectangle", "Other"])
+        ncols = st.number_input("Columns", min_value=1, value=7)
+
+    shape = st.selectbox("Cavity Shape", ["Circle", "Square", "Hexagon", "Rectangle", "Other"])
 
     st.subheader("Seedling Details")
     s1, s2 = st.columns(2)
@@ -101,10 +98,11 @@ with col_form:
             "shape": shape,
         }
 
+        # Initialize empty annotation grid (still needed for step 4)
         if "grid" not in st.session_state:
-            st.session_state.grid = [[1 for _ in range(ncols)] for _ in range(nrows)]
+            st.session_state.grid = [["G" for _ in range(ncols)] for _ in range(nrows)]
 
         st.switch_page("pages/4_Annotation_Grid.py")
 
-if st.button("Back to Grid Positioning"):
-    st.switch_page("pages/2B_Define_Grid.py")
+# Optional: remove the useless "Back to Grid Positioning" button
+# (or keep it disabled if you prefer)

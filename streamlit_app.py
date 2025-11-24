@@ -5,7 +5,7 @@ st.set_page_config(page_title="Seed Tray Annotation Tool", layout="centered")
 
 st.title("Seed Tray Annotation Tool")
 st.markdown("""
-### Perform and save your annotation in 5 STEPS
+### Perform and save your annotation in 4 STEPS
 """)
 
 if st.button("Next ➜"):

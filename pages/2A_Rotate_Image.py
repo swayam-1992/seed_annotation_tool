@@ -28,8 +28,13 @@ with col1:
         rotated = img.rotate(-rotation, expand=True)
         st.session_state.rotated_image = rotated
         st.session_state.final_rotation = rotation
+    
+        # Default grid values (required for metadata page)
+        st.session_state.final_grid_rows = 14   # or whatever default you prefer
+        st.session_state.final_grid_cols = 7    # or whatever default you prefer
+    
         st.success(f"Rotation {rotation}° saved!")
-        st.switch_page("pages/2B_Define_Grid.py")
+        st.switch_page("pages/3_Metadata_Input.py")   # ← CHANGED HERE
 
 with col2:
     rotated_preview = img.rotate(-rotation, expand=True)
