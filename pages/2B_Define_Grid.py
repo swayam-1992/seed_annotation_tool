@@ -3,7 +3,7 @@ import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 
 st.set_page_config(page_title="Define Grid", layout="wide")
-st.markdown("<h3>STEP 2 – Add Grid Layer</h3>", unsafe_allow_html=True)
+st.markdown("<h3>STEP 3 – Add Grid Layer</h3>", unsafe_allow_html=True)
 
 # Must have rotated image from Step 2A
 if "rotated_image" not in st.session_state:

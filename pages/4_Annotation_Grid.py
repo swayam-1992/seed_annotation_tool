@@ -33,7 +33,7 @@ if "grid" not in st.session_state:
 
 grid = st.session_state.grid
 
-st.markdown("<h3>STEP 4 – Annotate Each Cell</h3>", unsafe_allow_html=True)
+st.markdown("<h3>STEP 5 – Annotate Each Cell</h3>", unsafe_allow_html=True)
 st.markdown("**Click any cell to cycle: UG → G → A(S) → A(L) → A(D) → A(O) → UG...**")
 
 # Legend

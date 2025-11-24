@@ -5,7 +5,7 @@ from PIL import Image
 import PIL.ExifTags as ExifTags
 
 st.set_page_config(layout="wide", page_title="Seed Tray Annotator")
-st.markdown("<h3>STEP 3 – Capture & Tray Details</h3>", unsafe_allow_html=True)
+st.markdown("<h3>STEP 4 – Photograph & Tray Details</h3>", unsafe_allow_html=True)
 
 # Safety check
 if "rotated_image" not in st.session_state:
@@ -43,9 +43,9 @@ with col_img:
     st.caption("Final saved image will be **clean** (no grid lines)")
 
 with col_form:
-    st.header("Photograph & Tray Details")
+    #st.header("Photograph & Tray Details")
 
-    st.subheader("Capture Date")
+    st.subheader("Date of photograph capture")
     if exif_date:
         st.success(f"Auto-detected: **{exif_date}**")
         capture_date = exif_date
@@ -67,11 +67,11 @@ with col_form:
     s1, s2 = st.columns(2)
     with s1:
         crop = st.selectbox("Crop", [
-            "Tomato", "Cucumber", "Pepper", "Eggplant", "Lettuce",
-            "Cabbage", "Broccoli", "Cauliflower", "Onion", "Leek", "Other"
+            "Cucumber", "Hot Pepper", "Tomato",
+            "Cabbage", "Other"
         ])
     with s2:
-        sowing_date = st.date_input("Sowing Date", value=capture_date)
+        sowing_date = st.date_input("Date of sowing", value=capture_date)
 
     if sowing_date >= capture_date:
         st.error("Sowing date must be **before** capture date!")
