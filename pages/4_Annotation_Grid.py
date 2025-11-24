@@ -18,7 +18,7 @@ if "metadata" not in st.session_state or "rotated_image" not in st.session_state
 meta = st.session_state.metadata
 
 clean_img = st.session_state.rotated_image
-grid_img = clean_img   # ← Force clean image even if gridded_image existed before
+grid_img = clean_img   # ← Force clean reference image
 
 nrows, ncols = meta["nrows"], meta["ncols"]
 
@@ -51,7 +51,7 @@ for r in range(nrows):
             st.session_state.grid[r][c] = INT_TO_LABEL[val]
 
 # ---------------------------------------------------------
-# Page Title
+# Title
 # ---------------------------------------------------------
 st.markdown("<h3>STEP 4 – Annotate Each Cell</h3>", unsafe_allow_html=True)
 
@@ -76,62 +76,17 @@ for r in range(nrows):
         st.session_state.grid[r][c] = new_value
 
 # ---------------------------------------------------------
-# Prepare Download
-# ---------------------------------------------------------
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-base_name = f"{meta['crop']}_({meta['days_after_sowing']}d)_annotated_{timestamp}"
-
-json_data = {
-    "saved_at": datetime.now().isoformat(),
-    "metadata": meta,
-    "annotation_grid": st.session_state.grid
-}
-
-json_bytes = json.dumps(json_data, indent=2).encode("utf-8")
-
-# Clean image (PNG)
-img_buffer = io.BytesIO()
-clean_img.save(img_buffer, format="PNG")
-img_bytes = img_buffer.getvalue()
-
-# ---------------------------------------------------------
-# Download Buttons
+# Continue → Preview Page
 # ---------------------------------------------------------
 st.markdown("---")
-st.markdown("### Download Your Final Results")
 
-c1, c2 = st.columns(2)
+if st.button("Preview Annotation Summary ➜", type="primary"):
+    st.session_state.annotation_final = st.session_state.grid
+    st.session_state.clean_bytes = None
 
-with c1:
-    st.download_button(
-        "Download Clean Image (.png)",
-        img_bytes,
-        file_name=f"{base_name}.png",
-        mime="image/png"
-    )
+    # Convert image to PNG bytes for preview/download later
+    buf = io.BytesIO()
+    clean_img.save(buf, format="PNG")
+    st.session_state.clean_bytes = buf.getvalue()
 
-with c2:
-    st.download_button(
-        "Download Annotation (.json)",
-        json_bytes,
-        file_name=f"{base_name}.json",
-        mime="application/json"
-    )
-
-# ---------------------------------------------------------
-# Finish and Reset
-# ---------------------------------------------------------
-if st.button("Finish & Start New Tray", type="secondary"):
-    for key in [
-        "original_image", "rotated_image", "gridded_image", "processed_image",
-        "metadata", "grid", "final_grid_rows", "final_grid_cols",
-        "final_rotation", "image_path", "grid_bounds"
-    ]:
-        st.session_state.pop(key, None)
-
-    if os.path.exists("temp_uploads"):
-        shutil.rmtree("temp_uploads")
-        os.makedirs("temp_uploads", exist_ok=True)
-
-    st.success("Cleared! Starting fresh...")
-    st.rerun()
+    st.switch_page("pages/5_Preview_Annotation.py")
