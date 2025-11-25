@@ -28,14 +28,11 @@ nrows, ncols = meta["nrows"], meta["ncols"]
 LABELS = {
     "UG": "Ungerminated",
     "G": "Germinated",
-    "A(S)": "Stunted",
-    "A(L)": "Lanky",
-    "A(D)": "Diseased",
-    "A(O)": "Other"
+    "A": "Abnormal",
 }
 label_keys = list(LABELS.keys())
 
-INT_TO_LABEL = {0:"UG", 1:"G", 2:"A(S)", 3:"A(L)", 4:"A(D)", 5:"A(O)"}
+INT_TO_LABEL = {0:"UG", 1:"G", 2:"A"}
 
 # ---------------------------------------------------------
 # Initialize grid if missing
