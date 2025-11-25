@@ -9,6 +9,39 @@ import io
 st.set_page_config(layout="wide", page_title="Cell Annotation")
 
 # ---------------------------------------------------------
+# CSS: Make dropdowns smaller + reduce row spacing
+# ---------------------------------------------------------
+st.markdown("""
+<style>
+
+.small-selectbox > div > div {
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+    min-height: 26px !important;
+    font-size: 12px !important;
+}
+
+/* Reduce label size */
+.small-selectbox label {
+    font-size: 11px !important;
+    margin-bottom: -4px !important;
+}
+
+/* Remove large gaps between selectboxes */
+div[data-baseweb="select"] {
+    margin-top: -6px !important;
+    margin-bottom: -6px !important;
+}
+
+/* Reduce space between rows of columns */
+.block-container .row-widget.stColumns {
+    margin-bottom: -12px !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
 # Safety Check
 # ---------------------------------------------------------
 if "metadata" not in st.session_state or "rotated_image" not in st.session_state:
@@ -18,7 +51,7 @@ if "metadata" not in st.session_state or "rotated_image" not in st.session_state
 meta = st.session_state.metadata
 
 clean_img = st.session_state.rotated_image
-grid_img = clean_img   # ← Force clean reference image
+grid_img = clean_img
 
 nrows, ncols = meta["nrows"], meta["ncols"]
 
@@ -32,7 +65,7 @@ LABELS = {
 }
 label_keys = list(LABELS.keys())
 
-INT_TO_LABEL = {0:"UG", 1:"G", 2:"A"}
+INT_TO_LABEL = {0: "UG", 1: "G", 2: "A"}
 
 # ---------------------------------------------------------
 # Initialize grid if missing
@@ -52,25 +85,35 @@ for r in range(nrows):
 # ---------------------------------------------------------
 st.markdown("<h3>STEP 4 – Annotate Each Cell</h3>", unsafe_allow_html=True)
 
-# Show Image
-st.image(grid_img, caption="Reference Image", width=600)
-
 # ---------------------------------------------------------
-# Annotation Grid UI (Dropdown per cell)
+# SIDE-BY-SIDE LAYOUT
 # ---------------------------------------------------------
-st.markdown("### Annotation Grid")
+left, right = st.columns([1, 1.4])
 
-for r in range(nrows):
-    cols = st.columns(ncols)
-    for c in range(ncols):
-        current_value = st.session_state.grid[r][c]
-        new_value = cols[c].selectbox(
-            f"R{r+1}C{c+1}",
-            label_keys,
-            index=label_keys.index(current_value),
-            key=f"cell_{r}_{c}"
-        )
-        st.session_state.grid[r][c] = new_value
+with left:
+    # Show image twice (one above the other)
+    st.image(grid_img, caption="Reference Image (Top)", width=500)
+    st.image(grid_img, caption="Reference Image (Bottom)", width=500)
+
+with right:
+    st.markdown("### Annotation Grid")
+
+    for r in range(nrows):
+        cols = st.columns(ncols)
+        for c in range(ncols):
+            current_value = st.session_state.grid[r][c]
+
+            with cols[c]:
+                st.markdown('<div class="small-selectbox">', unsafe_allow_html=True)
+                new_value = st.selectbox(
+                    f"R{r+1}C{c+1}",
+                    label_keys,
+                    index=label_keys.index(current_value),
+                    key=f"cell_{r}_{c}",
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            st.session_state.grid[r][c] = new_value
 
 # ---------------------------------------------------------
 # Continue → Preview Page
@@ -79,9 +122,7 @@ st.markdown("---")
 
 if st.button("Preview Annotation Summary ➜", type="primary"):
     st.session_state.annotation_final = st.session_state.grid
-    st.session_state.clean_bytes = None
 
-    # Convert image to PNG bytes for preview/download later
     buf = io.BytesIO()
     clean_img.save(buf, format="PNG")
     st.session_state.clean_bytes = buf.getvalue()
