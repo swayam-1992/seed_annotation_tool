@@ -38,6 +38,13 @@ div[data-baseweb="select"] {
     margin-bottom: -12px !important;
 }
 
+/* Optional: prevent content feeling too wide on very large screens */
+.block-container {
+    max-width: 1400px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -88,12 +95,13 @@ st.markdown("<h3>STEP 4 – Annotate Each Cell</h3>", unsafe_allow_html=True)
 # ---------------------------------------------------------
 # SIDE-BY-SIDE LAYOUT
 # ---------------------------------------------------------
-left, right = st.columns([1, 1.4])
+# Use more balanced columns so the table has enough room
+left, right = st.columns([1, 1])
 
 with left:
-    # Show image twice (one above the other)
-    st.image(grid_img, caption="Reference Image (Top)", width=500)
-    st.image(grid_img, caption="Reference Image (Bottom)", width=500)
+    # Let Streamlit scale image to column width (aspect ratio preserved automatically)
+    st.image(grid_img, caption="Reference Image (Top)", use_column_width=True)
+    st.image(grid_img, caption="Reference Image (Bottom)", use_column_width=True)
 
 with right:
     st.markdown("### Annotation Grid")

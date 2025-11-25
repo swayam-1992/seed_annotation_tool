@@ -5,9 +5,28 @@ from PIL import Image
 import PIL.ExifTags as ExifTags
 
 st.set_page_config(layout="wide", page_title="Seed Tray Annotator")
+
+# ---------------------------------------------------------
+# Layout / CSS – keep boundaries clean & non-overlapping
+# ---------------------------------------------------------
+st.markdown("""
+<style>
+/* Keep content centered and avoid over-stretch or overlap */
+.block-container {
+    max-width: 1400px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown("<h3>STEP 3 – Photograph & Tray Details</h3>", unsafe_allow_html=True)
 
+# ---------------------------------------------------------
 # Safety check
+# ---------------------------------------------------------
 if "rotated_image" not in st.session_state:
     st.error("No image found! Please complete Step 2 first.")
     if st.button("Back to Rotate Image"):
@@ -17,29 +36,35 @@ if "rotated_image" not in st.session_state:
 img_clean = st.session_state.rotated_image
 img_display = img_clean  # Always show clean image now
 
-# EXIF date extraction (unchanged)
+# ---------------------------------------------------------
+# EXIF date extraction
+# ---------------------------------------------------------
 def extract_exif_date(pil_image):
     try:
         exif = pil_image.getexif()
-        if not exif: return None
+        if not exif:
+            return None
         for tag_id, value in exif.items():
             tag = ExifTags.TAGS.get(tag_id, tag_id)
             if tag == "DateTimeOriginal":
                 try:
                     return datetime.strptime(value, "%Y:%m:%d %H:%M:%S").date()
-                except:
+                except Exception:
                     return None
         return None
-    except:
+    except Exception:
         return None
 
 exif_date = extract_exif_date(img_clean)
 
-# Layout
-col_img, col_form = st.columns([1, 1.3])
+# ---------------------------------------------------------
+# Layout: side-by-side, non-overlapping
+# ---------------------------------------------------------
+col_img, col_form = st.columns([1, 1.2])
 
 with col_img:
-    st.image(img_display, caption="Your Seed Tray", width=550)
+    # Let image scale to column width, aspect ratio preserved
+    st.image(img_display, caption="Your Seed Tray", use_column_width=True)
 
 with col_form:
     st.subheader("Date of photograph capture")
@@ -63,13 +88,22 @@ with col_form:
     st.subheader("Seedling Details")
     s1, s2 = st.columns(2)
     with s1:
-        crop = st.selectbox("Crop", [
-            "Cucumber", "Hot Pepper", "Tomato",
-            "Cabbage", "Other"
-        ])
+        crop = st.selectbox(
+            "Crop",
+            [
+                "Cucumber",
+                "Hot Pepper",
+                "Tomato",
+                "Cabbage",
+                "Other",
+            ],
+        )
     with s2:
         sowing_date = st.date_input("Date of sowing", value=capture_date)
 
+    # -----------------------------------------------------
+    # Validations
+    # -----------------------------------------------------
     if sowing_date >= capture_date:
         st.error("Sowing date must be **before** capture date!")
         st.stop()
@@ -86,6 +120,9 @@ with col_form:
     st.code(f"images/{preview_name}.png", language="text")
     st.code(f"annotations/{preview_name}.json", language="text")
 
+    # -----------------------------------------------------
+    # Next button → go to grid page
+    # -----------------------------------------------------
     if st.button("Next → Annotation Grid", type="primary", use_container_width=True):
         st.session_state.metadata = {
             "UID_legacy": f"{crop}_{capture_date.strftime('%y%m%d')}_{days_after_sowing}d",
@@ -98,11 +135,8 @@ with col_form:
             "shape": shape,
         }
 
-        # Initialize empty annotation grid (still needed for step 4)
+        # Initialize empty annotation grid for Step 4
         if "grid" not in st.session_state:
-            st.session_state.grid = [["G" for _ in range(ncols)] for _ in range(nrows)]
+            st.session_state.grid = [["G" for _ in range(int(ncols))] for _ in range(int(nrows))]
 
         st.switch_page("pages/4_Annotation_Grid.py")
-
-# Optional: remove the useless "Back to Grid Positioning" button
-# (or keep it disabled if you prefer)
