@@ -1,138 +1,116 @@
 # pages/4_Annotation_Grid.py
 import streamlit as st
-import json
-import os
-import shutil
-from datetime import datetime
-import io
+import io   # ← This was missing!
 
 st.set_page_config(layout="wide", page_title="Cell Annotation")
 
 # ---------------------------------------------------------
-# CSS: Make dropdowns smaller + reduce row spacing
+# CSS – Beautiful colored clickable cells
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-
-.small-selectbox > div > div {
-    padding-top: 1px !important;
-    padding-bottom: 1px !important;
-    min-height: 26px !important;
-    font-size: 12px !important;
+.cell {
+    width: 100%;
+    height: 62px;
+    font-size: 20px;
+    font-weight: bold;
+    border: 3px solid #333;
+    border-radius: 10px;
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
 }
+.cell:hover { transform: scale(1.07); box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
 
-/* Reduce label size */
-.small-selectbox label {
-    font-size: 11px !important;
-    margin-bottom: -4px !important;
+.G  { background-color: #ccffcc; color: #006000; }
+.UG { background-color: #ffcccc; color: #800000; }
+.A  { background-color: #ccccff; color: #000080; }
+
+.header {
+    background: #333 !important;
+    color: white !important;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+    padding: 14px 0;
+    border-radius: 8px;
 }
-
-/* Remove large gaps between selectboxes */
-div[data-baseweb="select"] {
-    margin-top: -6px !important;
-    margin-bottom: -6px !important;
-}
-
-/* Reduce space between rows of columns */
-.block-container .row-widget.stColumns {
-    margin-bottom: -12px !important;
-}
-
-/* Optional: prevent content feeling too wide on very large screens */
-.block-container {
-    max-width: 1400px;
-    padding-left: 2rem;
-    padding-right: 2rem;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Safety Check
+# Safety + Data
 # ---------------------------------------------------------
 if "metadata" not in st.session_state or "rotated_image" not in st.session_state:
     st.error("No tray data found! Complete previous steps first.")
     st.stop()
 
 meta = st.session_state.metadata
-
 clean_img = st.session_state.rotated_image
-grid_img = clean_img
-
 nrows, ncols = meta["nrows"], meta["ncols"]
 
-# ---------------------------------------------------------
-# Labels
-# ---------------------------------------------------------
-LABELS = {
-    "UG": "Ungerminated",
-    "G": "Germinated",
-    "A": "Abnormal",
-}
-label_keys = list(LABELS.keys())
-
-INT_TO_LABEL = {0: "UG", 1: "G", 2: "A"}
-
-# ---------------------------------------------------------
-# Initialize grid if missing
-# ---------------------------------------------------------
+# Initialize grid
 if "grid" not in st.session_state:
-    st.session_state.grid = [[1 for _ in range(ncols)] for _ in range(nrows)]
+    st.session_state.grid = [["G" for _ in range(ncols)] for _ in range(nrows)]
 
-# Convert old integer grid → label grid
+# Convert old integer format if needed
 for r in range(nrows):
     for c in range(ncols):
-        val = st.session_state.grid[r][c]
-        if isinstance(val, int):
-            st.session_state.grid[r][c] = INT_TO_LABEL[val]
+        if isinstance(st.session_state.grid[r][c], int):
+            st.session_state.grid[r][c] = {0: "UG", 1: "G", 2: "A"}.get(st.session_state.grid[r][c], "G")
 
 # ---------------------------------------------------------
-# Title
+# UI
 # ---------------------------------------------------------
-st.markdown("<h3>STEP 4 – Annotate Each Cell</h3>", unsafe_allow_html=True)
+st.markdown("<h3>STEP 4 – Click to Annotate</h3>", unsafe_allow_html=True)
+st.markdown("**Green = G Red = UG Blue = A**  (click cycles: G → A → UG → G)")
 
-# ---------------------------------------------------------
-# SIDE-BY-SIDE LAYOUT
-# ---------------------------------------------------------
-# Use more balanced columns so the table has enough room
-left, right = st.columns([1, 1])
+left, right = st.columns([1, 1.15])
 
 with left:
-    # Let Streamlit scale image to column width (aspect ratio preserved automatically)
-    st.image(grid_img, caption="Reference Image (Top)", use_column_width=True)
-    st.image(grid_img, caption="Reference Image (Bottom)", use_column_width=True)
+    st.image(clean_img, use_container_width=True)
+    st.image(clean_img, use_container_width=True)
 
 with right:
-    st.markdown("### Annotation Grid")
+    # Column headers
+    hcols = st.columns([0.25] + [1]*ncols)
+    hcols[0].markdown('<div class="header">Row</div>', unsafe_allow_html=True)
+    for c in range(ncols):
+        hcols[c+1].markdown(f'<div class="header">{c+1}</div>', unsafe_allow_html=True)
 
+    # Grid
     for r in range(nrows):
-        cols = st.columns(ncols)
+        cols = st.columns([0.25] + [1]*ncols)
+        cols[0].markdown(f'<div class="header">{r+1}</div>', unsafe_allow_html=True)
+
         for c in range(ncols):
-            current_value = st.session_state.grid[r][c]
+            current = st.session_state.grid[r][c]
+            cycle = {"G": "A", "A": "UG", "UG": "G"}
+            next_val = cycle[current]
 
-            with cols[c]:
-                st.markdown('<div class="small-selectbox">', unsafe_allow_html=True)
-                new_value = st.selectbox(
-                    f"R{r+1}C{c+1}",
-                    label_keys,
-                    index=label_keys.index(current_value),
-                    key=f"cell_{r}_{c}",
+            with cols[c+1]:
+                if st.button(" ", key=f"btn_{r}_{c}", use_container_width=True):
+                    st.session_state.grid[r][c] = next_val
+                    st.rerun()
+
+                # Pure HTML colored cell — always correct color
+                st.markdown(
+                    f'<div class="cell {current}">{current}</div>',
+                    unsafe_allow_html=True
                 )
-                st.markdown('</div>', unsafe_allow_html=True)
-
-            st.session_state.grid[r][c] = new_value
 
 # ---------------------------------------------------------
-# Continue → Preview Page
+# Next Page Button
 # ---------------------------------------------------------
 st.markdown("---")
-
-if st.button("Preview Annotation Summary ➜", type="primary"):
-    st.session_state.annotation_final = st.session_state.grid
-
-    buf = io.BytesIO()
+if st.button("Preview & Download", type="primary", use_container_width=True):
+    st.session_state.annotation_final = [row[:] for row in st.session_state.grid]
+    
+    buf = io.BytesIO()                    # Now works!
     clean_img.save(buf, format="PNG")
     st.session_state.clean_bytes = buf.getvalue()
-
+    
     st.switch_page("pages/5_Preview_Annotation.py")
