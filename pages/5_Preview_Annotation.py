@@ -47,19 +47,44 @@ st.markdown("<h3>STEP 5 – Preview & Download</h3>", unsafe_allow_html=True)
 # ---------------------------------------------------------
 left, right = st.columns([1, 1])
 
+# ---------------------------------------------------------
+# LEFT PANEL: IMAGE
+# ---------------------------------------------------------
 with left:
     st.image(clean_bytes, use_column_width=True)
 
+# ---------------------------------------------------------
+# RIGHT PANEL: TABLE WITH ROW/COL NUMBERS
+# ---------------------------------------------------------
 with right:
     st.markdown("### 📋 Annotated Table (Preview)")
 
+    # ---- COLUMN HEADER ----
+    header_cols = st.columns(ncols + 1)  # extra column for row labels
+    header_cols[0].markdown("**Row\\Col**")  # top-left blank/label
+
+    for c in range(ncols):
+        header_cols[c + 1].markdown(
+            f"<div style='text-align:center; font-weight:700; font-size:18px;'>{c + 1}</div>",
+            unsafe_allow_html=True,
+        )
+
+    # ---- ROWS WITH ROW NUMBERS ----
     for r in range(nrows):
-        cols = st.columns(ncols)
+        cols = st.columns(ncols + 1)
+
+        # Row number on left
+        cols[0].markdown(
+            f"<div style='text-align:center; font-weight:700; font-size:18px;'>{r + 1}</div>",
+            unsafe_allow_html=True,
+        )
+
+        # Cell values
         for c in range(ncols):
             label = grid[r][c]
             bgcolor = COLOR_MAP[label]
 
-            cols[c].markdown(
+            cols[c + 1].markdown(
                 f"""
                 <div style="
                     border:1px solid #666;
@@ -111,13 +136,11 @@ with b2:
         mime="application/zip",
     )
 
-
 # ---------------------------------------------------------
-# Reset
+# RESET / START OVER
 # ---------------------------------------------------------
 if st.button("Start New Tray"):
     for key in list(st.session_state.keys()):
         st.session_state.pop(key, None)
 
     st.switch_page("pages/1_Upload_Image.py")
-
