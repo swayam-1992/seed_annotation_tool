@@ -2,10 +2,15 @@
 import streamlit as st
 import json
 from datetime import datetime
+import io
+from PIL import Image
+import zipfile
 
 st.set_page_config(page_title="Preview Annotation", layout="wide")
 
-# Safety check
+# ---------------------------------------------------------
+# SAFETY CHECK
+# ---------------------------------------------------------
 if "annotation_final" not in st.session_state or "metadata" not in st.session_state:
     st.error("No annotation data found. Please complete previous steps.")
     st.stop()
@@ -17,69 +22,95 @@ clean_bytes = st.session_state.clean_bytes
 nrows = len(grid)
 ncols = len(grid[0])
 
-st.markdown("<h3>STEP 5 – Preview & Download</h3>", unsafe_allow_html=True)
+# ---------------------------------------------------------
+# COLORS
+# ---------------------------------------------------------
+COLOR_MAP = {
+    "UG": "#ffcccc",  # red
+    "G":  "#ccffcc",  # green
+    "A":  "#ccccff",  # blue
+}
 
 # ---------------------------------------------------------
-# Preview Table
-# ---------------------------------------------------------
-st.markdown("### 📋 Annotated Table (Preview)")
-
-for r in range(nrows):
-    cols = st.columns(ncols)
-    for c in range(ncols):
-        cols[c].markdown(
-            f"""
-            <div style='
-                border:1px solid #666;
-                padding:6px;
-                text-align:center;
-                border-radius:4px;
-                background:#f5f5f5;
-                font-size:18px;
-            '>
-            {grid[r][c]}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-# ---------------------------------------------------------
-# Prepare JSON
+# BASENAME (YOUR EXACT LOGIC)
 # ---------------------------------------------------------
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 base_name = f"{meta['crop']}_({meta['days_after_sowing']}d)_annotated_{timestamp}"
 
-json_data = {
-    "saved_at": datetime.now().isoformat(),
-    "metadata": meta,
-    "annotation_grid": grid
-}
-json_bytes = json.dumps(json_data, indent=2).encode()
+# ---------------------------------------------------------
+# HEADER
+# ---------------------------------------------------------
+st.markdown("<h3>STEP 5 – Preview & Download</h3>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Downloads
+# SIDE-BY-SIDE LAYOUT (Image | Table)
 # ---------------------------------------------------------
-import zipfile
-import io
+left, right = st.columns([1, 1])
+
+with left:
+    st.image(clean_bytes, use_column_width=True)
+
+with right:
+    st.markdown("### 📋 Annotated Table (Preview)")
+
+    for r in range(nrows):
+        cols = st.columns(ncols)
+        for c in range(ncols):
+            label = grid[r][c]
+            bgcolor = COLOR_MAP[label]
+
+            cols[c].markdown(
+                f"""
+                <div style="
+                    border:1px solid #666;
+                    padding:8px;
+                    text-align:center;
+                    border-radius:4px;
+                    background:{bgcolor};
+                    font-size:17px;
+                    font-weight:600;
+                ">
+                    {label}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+st.markdown("---")
 
 # ---------------------------------------------------------
-# Create ZIP in memory
+# BUTTONS (Back + Download ZIP)
 # ---------------------------------------------------------
-zip_buffer = io.BytesIO()
+b1, b2 = st.columns(2)
 
-with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
-    zipf.writestr(f"{base_name}.json", json_bytes)
-    zipf.writestr(f"{base_name}.png", clean_bytes)
+with b1:
+    if st.button("⬅ Back to Annotation", type="secondary"):
+        st.switch_page("pages/4_Annotation_Grid.py")
 
-# Move pointer to start
-zip_buffer.seek(0)
+with b2:
+    # EXACT JSON STRUCTURE YOU PROVIDED
+    json_data = {
+        "saved_at": datetime.now().isoformat(),
+        "metadata": meta,
+        "annotation_grid": grid,
+    }
+    json_bytes = json.dumps(json_data, indent=2).encode()
 
-st.download_button(
-    label="⬇️ Download Image + Annotation (ZIP)",
-    data=zip_buffer,
-    file_name=f"{base_name}.zip",
-    mime="application/zip"
-)
+    # CREATE ZIP IN MEMORY
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        zipf.writestr(f"{base_name}.json", json_bytes)
+        zipf.writestr(f"{base_name}.png", clean_bytes)
+
+    zip_buffer.seek(0)
+
+    st.download_button(
+        label="⬇️ Download Image + Annotation (ZIP)",
+        data=zip_buffer,
+        file_name=f"{base_name}.zip",
+        mime="application/zip",
+    )
+
 
 # ---------------------------------------------------------
 # Reset
@@ -89,3 +120,4 @@ if st.button("Start New Tray"):
         st.session_state.pop(key, None)
 
     st.switch_page("pages/1_Upload_Image.py")
+
