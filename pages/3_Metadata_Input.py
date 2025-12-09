@@ -64,7 +64,7 @@ col_img, col_form = st.columns([1, 1.2])
 
 with col_img:
     # Let image scale to column width, aspect ratio preserved
-    st.image(img_display, caption="Your Seed Tray", use_column_width=True)
+    st.image(img_display, caption="Your Seed Tray", use_container_width=True)
 
 with col_form:
     st.subheader("Date of photograph capture")
