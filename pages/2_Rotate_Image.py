@@ -1,6 +1,8 @@
-# pages/2A_Rotate_Image.py
+# pages/2_Rotate_Image.py
 import streamlit as st
 from PIL import Image
+import numpy as np
+import cv2
 
 st.set_page_config(page_title="Rotate Image", layout="wide")
 st.markdown("<h3>STEP 2 – Rotate Seed Tray Image</h3>", unsafe_allow_html=True)
@@ -26,15 +28,15 @@ with col1:
     )
     if st.button("Next", type="primary", use_container_width=True):
         rotated = img.rotate(-rotation, expand=True)
+        rotated_rgb = np.array(rotated)
+        rotated_bgr = cv2.cvtColor(rotated_rgb, cv2.COLOR_RGB2BGR)
+        
         st.session_state.rotated_image = rotated
+        st.session_state.rotated_bgr = rotated_bgr
         st.session_state.final_rotation = rotation
-    
-        # Default grid values (required for metadata page)
-        st.session_state.final_grid_rows = 14   # or whatever default you prefer
-        st.session_state.final_grid_cols = 7    # or whatever default you prefer
-    
+        
         st.success(f"Rotation {rotation}° saved!")
-        st.switch_page("pages/3_Metadata_Input.py")   # ← CHANGED HERE
+        st.switch_page("pages/3_Perspective_Correction.py")
 
 with col2:
     rotated_preview = img.rotate(-rotation, expand=True)

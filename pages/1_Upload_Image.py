@@ -26,8 +26,6 @@ if uploaded:
     st.image(img, caption="Your seed tray", width=200)
     
     if st.button("Next", type="primary"):
-        st.switch_page("pages/2A_Rotate_Image.py")
-
-        #st.switch_page("pages/2_Rotate_Grid.py")
+        st.switch_page("pages/2_Rotate_Image.py")
 else:
     st.info("Please upload an image to continue")
